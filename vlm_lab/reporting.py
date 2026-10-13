@@ -5,7 +5,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 from scripts.labcommon import read_jsonl
 from scripts.score import _gt_boxes, _match, _to_norm1000, parse_output
-from .data import load_rows, objects_to_answer, open_image
+from .data import load_rows, objects_to_answer, open_image, yolo_to_box
 
 
 def draw_boxes(draw, boxes, width, height, color, prefix, y_offset=40):
@@ -33,16 +33,17 @@ def draw_ground_truth(rows, data_dir, out):
     out.mkdir(parents=True, exist_ok=True)
     for i, row in enumerate(rows):
         # Quantization error must be <= 0.5 normalized unit before scaling to pixels.
-        rounded = parse_output(objects_to_answer(row["objects"], row["width"], row["height"]))
-        original = sorted(_gt_boxes(row), key=lambda b: (b["bbox"][1], b["bbox"][0], b["label"]))
-        # Compare as a multiset; rounding can tie adjacent rows and reorder them.
-        for gt in original:
-            j = next((j for j, r in enumerate(rounded) if r["label"] == gt["label"]
-                      and all(abs(a-b) <= .500001 for a, b in zip(r["bbox"], gt["bbox"]))), None)
-            assert j is not None, "YOLO round-trip mismatch"
-            rounded.pop(j)
+        skipped = 0
+        for obj, gt in zip(row["objects"], _gt_boxes(row)):
+            converted = yolo_to_box(obj["label"], obj["yolo"], row["width"], row["height"])
+            if converted is None:
+                skipped += 1
+                continue
+            clipped_gt = [max(0, min(1000, v)) for v in gt["bbox"]]
+            # Ordinary rounding <= .5 unit; minimum-area expansion <= 1 unit.
+            assert all(abs(a-b) <= 1.000001 for a, b in zip(converted["bbox_2d"], clipped_gt)), "YOLO round-trip mismatch"
         panel(row, data_dir, parse_output(objects_to_answer(row["objects"], row["width"], row["height"])),
-              f"YOLO -> norm1000 -> pixel | sample {i+1}").save(out/f"sample_{i+1}.png")
+              f"YOLO round-trip | sample {i+1} | skipped targets={skipped}").save(out/f"sample_{i+1}.png")
 
 
 def visualize(pred_file, data_dir, out):

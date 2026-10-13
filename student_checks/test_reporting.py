@@ -32,3 +32,12 @@ def test_real_artifact_pipeline_on_synthetic_fixture(tmp_path):
     (evidence/"sample.json").write_text(json.dumps(score))
     summarize(evidence, tmp_path/"results.md")
     assert "0.6667" in (tmp_path/"results.md").read_text()
+
+
+def test_roundtrip_illustration_handles_zero_height_and_tiny_boxes(tmp_path):
+    Image.new("RGB", (640, 360)).save(tmp_path/"one.jpg")
+    row = {"image_id": "one", "image_path": "one.jpg", "width": 640, "height": 360,
+           "objects": [{"label": "crack", "yolo": [.639062, .786111, .003125, 0.0]},
+                       {"label": "crack", "yolo": [.5, .5, .00001, .00001]}]}
+    draw_ground_truth([row], tmp_path, tmp_path/"figures")
+    assert (tmp_path/"figures/sample_1.png").exists()

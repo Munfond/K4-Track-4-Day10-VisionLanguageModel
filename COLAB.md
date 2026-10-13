@@ -42,6 +42,13 @@ Không dùng token GitHub trong URL hoặc cell; repo nộp được yêu cầu 
 Dataset được tải/chia lại trên ổ `/content/road-vlm/data` mỗi session mới. Version phải khớp checkpoint cũ.
 Split chuẩn là train 1.422, val 276, test 311 ảnh; không tự chia lại hoặc sửa công cụ đề.
 
+Một số nhãn gốc có chiều rộng/cao bằng 0. Mã bỏ những box không có diện tích nhìn thấy khỏi
+**đáp án huấn luyện**, giữ ảnh và mọi box hợp lệ khác. Box gốc có diện tích dương nhưng bị làm tròn
+thành đường thẳng được mở rộng tối thiểu một đơn vị tọa độ. Không tạo box giả cho nhãn gốc `w=0`/`h=0`.
+`report/data_checks.json` ghi số nhãn bị bỏ theo split/lớp và danh sách image_id để kiểm tra.
+Các split, metadata và scorer gốc không đổi: box GT không hợp lệ vẫn được scorer tính vào ground truth,
+có thể thành FN và giới hạn F1 đạt được. Ghi hạn chế này trong phần “Nhìn lại” của REPORT.md.
+
 ## 3. Thứ tự chạy thí nghiệm
 
 | Mục notebook | Việc thực hiện | Kết quả |
