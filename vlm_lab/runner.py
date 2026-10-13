@@ -83,8 +83,8 @@ def save_checkpoint(model, processor, optimizer, scaler, cfg, stats, root, step,
     target = root/f"step-{step:04d}"
     staging = root/f"step-{step:04d}.incomplete"
     staging.mkdir(parents=True, exist_ok=True)
-    model.save_pretrained(staging/"adapter")
-    processor.save_pretrained(staging/"processor")
+    model.save_pretrained(str(staging/"adapter"))
+    processor.save_pretrained(str(staging/"processor"))
     if cfg["train_projector"]:
         projector = {n: p.detach().cpu().clone() for n, p in model.named_parameters() if is_projector(n)}
         torch.save(projector, staging/"projector.pt")
@@ -97,6 +97,7 @@ def save_checkpoint(model, processor, optimizer, scaler, cfg, stats, root, step,
            "projector_params": stats["projector_params"], "peak_vram_gb": peak,
            "train_minutes": minutes}
     dump_json(staging/"run.json", run)
+    validate_checkpoint_files(staging, require_training_state=True)
     if target.exists():
         raise FileExistsError(f"Checkpoint already exists: {target}")
     staging.rename(target)
@@ -121,10 +122,42 @@ def resolve_checkpoint(path):
     return path
 
 
+def validate_checkpoint_files(checkpoint, require_training_state=False):
+    """Fail locally before model download; metadata alone does not prove usable weights."""
+    checkpoint = Path(checkpoint)
+    run = read_json(checkpoint/"run.json")
+    adapter = checkpoint/"adapter"
+    needed = [adapter/"adapter_config.json"]
+    candidates = [adapter/"adapter_model.safetensors", adapter/"adapter_model.bin"]
+    weights = next((p for p in candidates if p.is_file() and p.stat().st_size > 0), None)
+    if weights is None:
+        needed.append(candidates[0])
+    if run["config"].get("train_projector"):
+        needed.append(checkpoint/"projector.pt")
+    if require_training_state:
+        needed.append(checkpoint/"training_state.pt")
+    missing = [str(p) for p in needed if not p.is_file() or p.stat().st_size == 0]
+    if missing:
+        raise FileNotFoundError(
+            "Checkpoint is incomplete or Drive files are unavailable. Missing/empty: "
+            + ", ".join(missing)
+            + ". Check files in Google Drive; preserve the run directory. Do not delete checkpoints or retrain yet.")
+    return str(adapter), weights
+
+
+def load_local_adapter_weights(checkpoint):
+    """Read checkpoint weights directly; a local path must never fall back to HF Hub."""
+    _, weights = validate_checkpoint_files(checkpoint)
+    if weights.suffix == ".safetensors":
+        from safetensors.torch import load_file
+        return load_file(str(weights), device="cpu")
+    import torch
+    return torch.load(weights, map_location="cpu", weights_only=True)
+
+
 def train(args):
     import torch
     from peft import set_peft_model_state_dict
-    from peft.utils.save_and_load import load_peft_weights
     cfg = config_from_args(args)
     if "lora" not in cfg:
         raise ValueError("Train with configs/e1.yaml, e2.yaml, or e3.yaml")
@@ -140,6 +173,8 @@ def train(args):
         if previous["complete"]:
             print("Training already complete; proceed to inference.")
             return
+        validate_checkpoint_files(saved, require_training_state=True)
+        print(f"Resuming saved optimizer step {previous['step']} from {saved}", flush=True)
     elif (root/"latest.json").exists() or (root/"config.json").exists():
         raise FileExistsError("Run directory exists. Use --resume or a new --run-dir.")
     dump_json(root/"config.json", cfg)
@@ -154,7 +189,7 @@ def train(args):
     scaler = torch.amp.GradScaler("cuda")
     start_step, prior_minutes, prior_peak = 0, 0., 0.
     if saved:
-        result = set_peft_model_state_dict(model, load_peft_weights(saved/"adapter", device="cpu"))
+        result = set_peft_model_state_dict(model, load_local_adapter_weights(saved))
         assert not result.unexpected_keys, result.unexpected_keys
         if cfg["train_projector"]:
             load_projector(model, saved/"projector.pt")
@@ -252,6 +287,7 @@ def infer(args):
     saved = resolve_checkpoint(args.checkpoint) if args.checkpoint else None
     run = read_json(saved/"run.json") if saved else None
     if run:
+        adapter_path, _ = validate_checkpoint_files(saved)
         assert run["dataset_version"] == dataset_version(args.data_dir), "Dataset mismatch"
         if args.split == "test" and not run["complete"]:
             raise ValueError("Incomplete training: validate on val only")
@@ -280,7 +316,7 @@ def infer(args):
         return
     model, processor = load_base(model_id)
     if saved:
-        model = PeftModel.from_pretrained(model, saved/"adapter", is_trainable=False)
+        model = PeftModel.from_pretrained(model, adapter_path, is_trainable=False, local_files_only=True)
         if run["config"]["train_projector"]:
             load_projector(model, saved/"projector.pt")
     model.eval()

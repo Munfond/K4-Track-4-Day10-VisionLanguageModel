@@ -130,6 +130,7 @@ Notebook không tự pull code khi repo đã tồn tại; cập nhật repo Cola
 | CUDA OOM khi infer | Đặt `INFER_BATCH=1`, chạy lại cùng output path; số ảnh còn thiếu được tiếp tục |
 | Loss hoặc gradient NaN/Inf | Dừng và kiểm tra mask/nhãn; giảm lr trong cấu hình riêng và thử val. Mã không âm thầm bỏ qua bước lỗi |
 | Resume config mismatch | Dùng chính xác cấu hình lần đầu; thay đổi cấu hình thì tạo run mới |
+| HFValidationError khi resume, hoặc checkpoint incomplete | Metadata `run.json` không đủ để xác nhận adapter còn nguyên. Kiểm tra `adapter/adapter_model.safetensors`, `adapter_config.json`, `training_state.pt`, và `projector.pt` cho E2/E3 trên Drive. Bản mới nạp trọng số local trực tiếp và báo file thiếu trước khi tải model; giữ checkpoint để kiểm tra, không tự xóa/train lại |
 | Expected 220/252/348 nhưng nhận số khác | Dừng, kiểm tra phiên bản và cây module; không xóa assert để chạy tiếp |
 | Unexpected quantized parameter: model.visual... | Cập nhật code bằng git pull. Với transformers 5.19, skip phải là đường dẫn đầy đủ `model.visual`, không phải `visual`; mã kiểm tra ViT/projector/lm_head sau khi load |
 | Parse rate thấp | Đọc output val, kiểm tra nhãn có `<|im_end|>`; thử giới hạn sinh dài hơn trên val với output path mới |
