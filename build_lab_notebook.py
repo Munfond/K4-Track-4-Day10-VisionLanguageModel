@@ -100,13 +100,14 @@ Chọn `DATA_MODE`: `kaggle`, `zip`, hoặc `source`. Kaggle: tạo Colab Secret
 code('''
 DATA_MODE = "kaggle"
 DATA_PATH = "/content/drive/MyDrive/dataset.zip"  # chỉ dùng cho zip/source
+DATA_CACHE = "/content/dataset_cache"  # tải/giải nén trên ổ Colab, không dùng work/ trên Drive
 if DATA_MODE == "kaggle":
     from google.colab import userdata
     os.environ["KAGGLE_USERNAME"] = userdata.get("KAGGLE_USERNAME")
     os.environ["KAGGLE_KEY"] = userdata.get("KAGGLE_KEY")
-    run_cmd(sys.executable, "scripts/prepare_data.py", "--kaggle")
+    run_cmd(sys.executable, "scripts/prepare_data.py", "--kaggle", "--work", DATA_CACHE)
 elif DATA_MODE in ("zip", "source"):
-    run_cmd(sys.executable, "scripts/prepare_data.py", "--"+DATA_MODE, DATA_PATH)
+    run_cmd(sys.executable, "scripts/prepare_data.py", "--"+DATA_MODE, DATA_PATH, "--work", DATA_CACHE)
 else:
     raise ValueError(DATA_MODE)
 ''')

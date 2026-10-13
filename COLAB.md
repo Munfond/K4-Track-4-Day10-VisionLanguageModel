@@ -40,6 +40,8 @@ Không dùng token GitHub trong URL hoặc cell; repo nộp được yêu cầu 
 6. Chạy mục **2**, đọc thống kê split và xem 6 ảnh. Cell phải xác nhận 220 token ảnh, prefix chat template, mask loss và collator.
 
 Dataset được tải/chia lại trên ổ `/content/road-vlm/data` mỗi session mới. Version phải khớp checkpoint cũ.
+Cache tải và giải nén nằm trong `/content/dataset_cache` qua tùy chọn `--work`, tránh đọc/ghi hàng nghìn
+file nhỏ trên Drive. Thư mục `work/` trên Drive chỉ dùng cho dự đoán và kết quả cần giữ lại.
 Split chuẩn là train 1.422, val 276, test 311 ảnh; không tự chia lại hoặc sửa công cụ đề.
 
 Một số nhãn gốc có chiều rộng/cao bằng 0. Mã bỏ những box không có diện tích nhìn thấy khỏi
