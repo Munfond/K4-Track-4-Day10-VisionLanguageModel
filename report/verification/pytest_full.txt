@@ -1,0 +1,17 @@
+Command: C:\Users\nguye\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m pytest -q tests student_checks
+
+...............F...........s............................................ [ 77%]
+.....................                                                    [100%]
+================================== FAILURES ===================================
+_________ test_report_template_has_student_markers_and_ten_questions __________
+
+    def test_report_template_has_student_markers_and_ten_questions():
+>       assert "<điền" in DOCS["REPORT.md"]
+E       AssertionError: assert '<điền' in '# Báo cáo Lab Day 10 — Grounding hư hại mặt đường bằng Qwen3-VL-4B\n\nHọ tên: **Nguyễn Đức Anh**  \nMSSV: **2A2026026...utput lấy từ notebook thực nghiệm của người nộp. Người nộp cần đọc, kiểm chứng và hiểu kết luận để chuẩn bị vấn đáp.\n'
+
+tests\test_configs_and_docs.py:46: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_configs_and_docs.py::test_report_template_has_student_markers_and_ten_questions
+1 failed, 91 passed, 1 skipped in 29.40s
+
+Exit code: 1

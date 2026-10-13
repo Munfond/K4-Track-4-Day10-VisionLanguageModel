@@ -1,0 +1,118 @@
+{
+  "source": "Six real E1 examples exported in report/figures/e1/index.md; not the full 311-image test.",
+  "image_ids": [
+    "vlcsnap-00202",
+    "vlcsnap-00204",
+    "vlcsnap-00206",
+    "vlcsnap-00200",
+    "vlcsnap-00201",
+    "vlcsnap-00203"
+  ],
+  "n_images": 6,
+  "correct_norm1000": {
+    "n_images": 6,
+    "parse_valid_rate": 1.0,
+    "missing_predictions": 0,
+    "micro": {
+      "precision": 0.5,
+      "recall": 0.5,
+      "f1": 0.5,
+      "tp": 4,
+      "fp": 4,
+      "fn": 4
+    },
+    "per_class": {
+      "pothole": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0
+      },
+      "crack": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 3,
+        "fn": 3
+      },
+      "manhole": {
+        "precision": 0.8,
+        "recall": 0.8,
+        "f1": 0.8000000000000002,
+        "tp": 4,
+        "fp": 1,
+        "fn": 1
+      },
+      "other": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0
+      }
+    },
+    "mean_iou": 0.7090574708265163,
+    "fp_per_image": 0.6666666666666666,
+    "f1_ci95": [
+      0.2222222222222222,
+      0.8571428571428571
+    ]
+  },
+  "incorrect_pixel": {
+    "n_images": 6,
+    "parse_valid_rate": 1.0,
+    "missing_predictions": 0,
+    "micro": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "fp": 8,
+      "fn": 8
+    },
+    "per_class": {
+      "pothole": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0
+      },
+      "crack": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 3,
+        "fn": 3
+      },
+      "manhole": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 5,
+        "fn": 5
+      },
+      "other": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0
+      }
+    },
+    "mean_iou": 0.0,
+    "fp_per_image": 1.3333333333333333,
+    "f1_ci95": [
+      0.0,
+      0.0
+    ]
+  }
+}

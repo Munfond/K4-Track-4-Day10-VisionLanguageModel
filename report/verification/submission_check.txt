@@ -1,0 +1,19 @@
+Command: C:\Users\nguye\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe scripts/check_submission.py
+
+[PASS] evidence e0
+[PASS] evidence e1
+[PASS] evidence e2
+[PASS] evidence e3
+[PASS] evidence e4 — 2 file
+[PASS] e1 meta
+[PASS] e2 meta
+[PASS] e3 meta
+[PASS] dataset_version nhất quán — ['d10-21e4070301']
+[PASS] khớp data/splits/meta.json
+[PASS] REPORT.md đã điền — còn chuỗi '<điền'
+[PASS] git commits — 10/5
+[PASS] git forbidden files
+
+0 FAIL, 0 WARN
+
+Exit code: 0

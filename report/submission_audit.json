@@ -1,0 +1,208 @@
+{
+  "review_date": "2026-10-14",
+  "dataset_version": "d10-21e4070301",
+  "notebook_sha256_lf": "a13c745970319010e090610dcd23939df174bc6d84a1fda784e469fab6fe4033",
+  "checks": [
+    {
+      "check": "e0 schema",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e0 count arithmetic",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e0 metrics arithmetic",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e0 per-class arithmetic",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e1 schema",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e1 count arithmetic",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e1 metrics arithmetic",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e1 per-class arithmetic",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e2 schema",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e2 count arithmetic",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e2 metrics arithmetic",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e2 per-class arithmetic",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e3 schema",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e3 count arithmetic",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e3 metrics arithmetic",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e3 per-class arithmetic",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e4_data_size_0.1 schema",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e4_data_size_0.1 count arithmetic",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e4_data_size_0.1 metrics arithmetic",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e4_data_size_0.1 per-class arithmetic",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e4_data_size_1.0 schema",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e4_data_size_1.0 count arithmetic",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e4_data_size_1.0 metrics arithmetic",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e4_data_size_1.0 per-class arithmetic",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "E1 rubric thresholds",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "E4 100% reuses E3 exactly",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e1 actual config",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e1 resource logs match evidence",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e2 actual config",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e2 resource logs match evidence",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e3 actual config",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "e3 resource logs match evidence",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "E4 base chosen on val",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Report identity and 10 answers",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "All report table numbers match JSON",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "At least 6 readable illustrations",
+      "pass": true,
+      "detail": "18 PNG files"
+    },
+    {
+      "check": "Illustration captions match original GT/scorer",
+      "pass": true,
+      "detail": "18 captions verified"
+    },
+    {
+      "check": "Instructor files unchanged",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "No forbidden tracked files",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "No literal API key in notebook source/output",
+      "pass": true,
+      "detail": ""
+    }
+  ],
+  "failures": []
+}

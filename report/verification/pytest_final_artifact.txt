@@ -1,0 +1,7 @@
+Command: C:\Users\nguye\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m pytest -q tests student_checks -k not test_report_template_has_student_markers_and_ten_questions
+
+..........................s............................................. [ 78%]
+....................                                                     [100%]
+91 passed, 1 skipped, 1 deselected in 22.66s
+
+Exit code: 0

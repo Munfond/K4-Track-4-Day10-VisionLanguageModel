@@ -1,0 +1,11 @@
+{
+  "model_id": "Qwen/Qwen3-VL-4B-Instruct",
+  "method": "Independent parameter count on the actual architecture constructed on torch meta device; not a trained run. Shared tensors counted once in total.",
+  "total_unique": 4437815808,
+  "visual_including_projectors": 415347712,
+  "merger": 27271680,
+  "deepstack_mergers": 81833472,
+  "all_projectors": 109105152,
+  "language_model_including_embedding": 4022468096,
+  "lm_head_shared_with_embedding": 388956160
+}

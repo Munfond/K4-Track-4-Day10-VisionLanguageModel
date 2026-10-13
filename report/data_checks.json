@@ -1,0 +1,65 @@
+{
+  "dataset_version": "d10-21e4070301",
+  "counts": {
+    "train": {
+      "images": 1422,
+      "boxes": {
+        "pothole": 1074,
+        "crack": 1750,
+        "manhole": 691
+      }
+    },
+    "val": {
+      "images": 276,
+      "boxes": {
+        "pothole": 66,
+        "crack": 470,
+        "manhole": 103
+      }
+    },
+    "test": {
+      "images": 311,
+      "boxes": {
+        "pothole": 121,
+        "crack": 299,
+        "manhole": 163
+      }
+    }
+  },
+  "target_policy": "Skip zero/nonpositive visible area; expand positive boxes collapsed by rounding to one unit.",
+  "scoring_policy": "Original splits and score.py unchanged; skipped GT boxes remain in official evaluation.",
+  "annotation_quality": {
+    "train": {
+      "skipped_target_boxes": 1,
+      "skipped_by_class": {
+        "crack": 1
+      },
+      "skipped_examples": [
+        {
+          "image_id": "vlcsnap-00058",
+          "object_index": 1,
+          "label": "crack",
+          "yolo": [
+            0.639062,
+            0.786111,
+            0.003125,
+            0.0
+          ]
+        }
+      ],
+      "expanded_small_boxes_norm1000": []
+    },
+    "val": {
+      "skipped_target_boxes": 0,
+      "skipped_by_class": {},
+      "skipped_examples": [],
+      "expanded_small_boxes_norm1000": []
+    },
+    "test": {
+      "skipped_target_boxes": 0,
+      "skipped_by_class": {},
+      "skipped_examples": [],
+      "expanded_small_boxes_norm1000": []
+    }
+  }
+}

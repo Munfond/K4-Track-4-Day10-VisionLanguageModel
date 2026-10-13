@@ -1,0 +1,42 @@
+[PASS] e0 schema
+[PASS] e0 count arithmetic
+[PASS] e0 metrics arithmetic
+[PASS] e0 per-class arithmetic
+[PASS] e1 schema
+[PASS] e1 count arithmetic
+[PASS] e1 metrics arithmetic
+[PASS] e1 per-class arithmetic
+[PASS] e2 schema
+[PASS] e2 count arithmetic
+[PASS] e2 metrics arithmetic
+[PASS] e2 per-class arithmetic
+[PASS] e3 schema
+[PASS] e3 count arithmetic
+[PASS] e3 metrics arithmetic
+[PASS] e3 per-class arithmetic
+[PASS] e4_data_size_0.1 schema
+[PASS] e4_data_size_0.1 count arithmetic
+[PASS] e4_data_size_0.1 metrics arithmetic
+[PASS] e4_data_size_0.1 per-class arithmetic
+[PASS] e4_data_size_1.0 schema
+[PASS] e4_data_size_1.0 count arithmetic
+[PASS] e4_data_size_1.0 metrics arithmetic
+[PASS] e4_data_size_1.0 per-class arithmetic
+[PASS] E1 rubric thresholds
+[PASS] E4 100% reuses E3 exactly
+[PASS] e1 actual config
+[PASS] e1 resource logs match evidence
+[PASS] e2 actual config
+[PASS] e2 resource logs match evidence
+[PASS] e3 actual config
+[PASS] e3 resource logs match evidence
+[PASS] E4 base chosen on val
+[PASS] Report identity and 10 answers
+[PASS] All report table numbers match JSON
+[PASS] At least 6 readable illustrations — 18 PNG files
+[PASS] Illustration captions match original GT/scorer — 18 captions verified
+[PASS] Instructor files unchanged
+[PASS] No forbidden tracked files
+[PASS] No literal API key in notebook source/output
+
+0 audit FAIL
