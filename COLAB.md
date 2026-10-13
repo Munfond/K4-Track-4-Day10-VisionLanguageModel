@@ -126,6 +126,7 @@ Notebook không tự pull code khi repo đã tồn tại; cập nhật repo Cola
 | Không thấy `vlm_lab/runner.py` | Repo clone chưa có mã mới; push từ local hoặc upload toàn bộ source ZIP |
 | Không có CUDA | Đổi runtime sang T4 GPU |
 | torch/torchvision import lỗi | Kiểm tra phiên bản cặp thư viện của runtime; ưu tiên tạo runtime Colab mới. Không cài một bản torchvision bất kỳ với torch khác phiên bản |
+| PEFT báo torchao 0.10.0 không tương thích | Lab không dùng torchao. Cell môi trường mới tự gỡ torchao <0.16.0; phiên đang chạy có thể dùng `python -m pip uninstall -y torchao` rồi chạy lại test. Không cần đổi torch/torchvision hoặc xóa checkpoint |
 | CUDA OOM khi train | Dùng batch 1, accumulation 8 cho **tất cả** setup; với run đã bắt đầu, tạo run mới để ghi nhận thay đổi. Checkpointing đã bật |
 | CUDA OOM khi infer | Đặt `INFER_BATCH=1`, chạy lại cùng output path; số ảnh còn thiếu được tiếp tục |
 | Loss hoặc gradient NaN/Inf | Dừng và kiểm tra mask/nhãn; giảm lr trong cấu hình riêng và thử val. Mã không âm thầm bỏ qua bước lỗi |

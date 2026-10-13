@@ -79,6 +79,16 @@ def backup_reports():
 
 run_cmd("nvidia-smi", "-L")
 run_cmd(sys.executable, "-m", "pip", "install", "-r", "requirements-colab.txt", "pytest")
+# Colab có thể cài sẵn torchao quá cũ cho PEFT. Lab dùng bitsandbytes, không dùng torchao.
+from importlib.metadata import version, PackageNotFoundError
+from packaging.version import Version
+try:
+    torchao_version = version("torchao")
+except PackageNotFoundError:
+    torchao_version = None
+if torchao_version is not None and Version(torchao_version) < Version("0.16.0"):
+    print(f"Removing incompatible optional torchao {torchao_version}; lab uses bitsandbytes.")
+    run_cmd(sys.executable, "-m", "pip", "uninstall", "-y", "torchao")
 # Colab có thể có xung đột từ các package không dùng trong lab; vẫn in để kiểm tra.
 run_cmd(sys.executable, "-m", "pip", "check", check=False)
 run_cmd(sys.executable, "-c", "import torch, torchvision, transformers, peft, bitsandbytes; "
