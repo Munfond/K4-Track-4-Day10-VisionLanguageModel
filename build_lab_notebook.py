@@ -16,14 +16,14 @@ def code(source):
 
 md("""
 # Lab Day 10 — Qwen3-VL-4B: triển khai E0–E4
-Chạy các cell **theo thứ tự** trên Colab T4. Mã của người làm nằm trong `vlm_lab/`;
+Chạy các cell **theo thứ tự** trên Colab L4. Mã của người làm nằm trong `vlm_lab/`;
 giữ nguyên `scripts/` và `tests/`. Xem `COLAB.md` để biết cách tiếp tục khi mất session.
 Đầu ra và số liệu chỉ được tạo từ những lần chạy thật. E5 là bonus: đã có reward + test,
 chưa tích hợp vòng GRPO. Bạn cần đọc hiểu mã, kiểm chứng và tự viết 10 câu trong REPORT.md.
 """)
 md("""
-## 0. Môi trường (Colab T4)
-Runtime → Change runtime type → **T4 GPU**. Sửa `REPO_URL` thành repo của bạn chứa mã này.
+## 0. Môi trường (Colab L4)
+Runtime → Change runtime type → **L4 GPU**. Sửa `REPO_URL` thành repo của bạn chứa mã này.
 Nếu dùng ZIP, giải nén repo vào `/content/road-vlm` và đặt `REPO_URL = ""`.
 Google Drive giữ checkpoint và predictions; dữ liệu và model cache nằm trên ổ Colab cho nhanh.
 """)
@@ -225,7 +225,7 @@ md("""
 Mặc định E4 là **data_size**: 10% vs 100% train, giữ các cấu hình khác của setup tốt nhất trên val.
 Kết quả 100% được dùng lại từ run nền; chạy thêm 10%. Có thể đổi `E4_VARIABLE` thành `rank`
 (4 vs 64) hoặc `coord_scale` (norm1000 vs pixel). Với pixel, prompt/nhãn/scorer tự đổi đồng bộ.
-Không đổi lựa chọn E4 dựa trên điểm test. Rank 64 trên E3 có thể vượt VRAM T4.
+Không đổi lựa chọn E4 dựa trên điểm test. Với rank 64 trên E3, hãy kiểm tra VRAM L4 trong lần chạy thử.
 """)
 code('''
 import copy, yaml
