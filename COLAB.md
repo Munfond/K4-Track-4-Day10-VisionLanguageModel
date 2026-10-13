@@ -94,15 +94,17 @@ checkpoints/e1/ (tương tự e2, e3 và e4)
     adapter/                 # LoRA
     processor/
     projector.pt             # chỉ E2/E3 và E4 dùng projector
-    training_state.pt        # optimizer, scaler, RNG; chỉ giữ cho latest
+    training_state.pt        # optimizer, scaler, RNG; giữ bản cũ để phục hồi
     run.json
 work/                        # predictions, manifest, điểm val, cấu hình E4
 report/                      # backup evidence, ảnh, bảng kết quả
 lab_results.zip              # chỉ chứa report/
 ```
 
-Checkpoint mỗi 100 bước, gồm adapter **và projector**. Các checkpoint trước giữ adapter/projector;
-optimizer/RNG chỉ giữ ở checkpoint mới nhất để giảm dung lượng. Chừa nhiều GB trống trên Drive
+Checkpoint mỗi 100 bước, gồm adapter **và projector**. Bản mới ghi trên ổ local rồi chép sang
+Drive, đọc lại trọng số/trạng thái trước khi cập nhật latest.json. Giữ optimizer/RNG ở checkpoint cũ
+để có thể phục hồi khi checkpoint mới bị thiếu file; không bảo đảm Drive giữ file nếu runtime bị hủy hoặc quota đầy.
+Chừa nhiều GB trống trên Drive
 (E2/E3 có projector khoảng 109M tham số fp32 cộng optimizer; toàn bộ chuỗi có thể chiếm hơn 10 GB).
 
 Nếu Colab mất session:
@@ -115,6 +117,18 @@ Nếu Colab mất session:
 Có thể mất phần tính toán sau checkpoint gần nhất. Nếu bị ngắt trước checkpoint đầu tiên,
 đổi thư mục run hoặc chuyển thư mục run dở sang tên khác trong Drive để bắt đầu lại.
 Một dòng prediction bị ghi dở có thể làm JSONL không đọc được; giữ backup rồi bỏ riêng dòng cuối hỏng trước khi chạy lại.
+
+Nếu checkpoint báo thiếu file, chạy kiểm tra chỉ đọc:
+
+```bash
+python -m vlm_lab.runner checkpoints --run-dir /content/drive/MyDrive/road-vlm-day10/checkpoints/e1
+```
+
+Lệnh liệt kê cả `step-*.incomplete`, kích thước file và khả năng đọc tensor. Chỉ các dòng `RESUME_OK`
+mới có đủ adapter, optimizer/scaler/RNG và projector nếu cần. Nếu tìm thấy một bản tốt, dùng
+`--select <tên thư mục RESUME_OK>` với cùng lệnh để cập nhật con trỏ latest; metadata cũ được sao lưu.
+Nếu không có bản đủ file, kiểm tra Drive Trash và các bản backup. Không thể khôi phục trọng số bằng run.json
+hoặc train_log.jsonl. Chỉ sau khi xác nhận không có bản phục hồi mới giữ thư mục lỗi dưới tên khác và train lại.
 
 Nếu thay cấu hình, dùng **run directory và prediction path mới**; không trộn kết quả cũ với model mới.
 Notebook không tự pull code khi repo đã tồn tại; cập nhật repo Colab hoặc dùng checkout mới nếu code local thay đổi.

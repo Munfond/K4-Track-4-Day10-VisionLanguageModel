@@ -56,3 +56,61 @@ def test_resume_requires_optimizer_and_projector(tmp_path):
     with pytest.raises(FileNotFoundError) as error:
         validate_checkpoint_files(tmp_path, require_training_state=True)
     assert "projector.pt" in str(error.value) and "training_state.pt" in str(error.value)
+
+
+def components():
+    from peft import LoraConfig, get_peft_model
+    model = get_peft_model(torch.nn.Sequential(torch.nn.Linear(3, 2)),
+                           LoraConfig(r=1, target_modules=["0"]))
+
+    class Processor:
+        def save_pretrained(self, path):
+            from pathlib import Path
+            Path(path).mkdir(parents=True)
+            (Path(path)/"processor.json").write_text("{}")
+
+    optimizer = torch.optim.AdamW(p for p in model.parameters() if p.requires_grad)
+    return model, Processor(), optimizer, torch.amp.GradScaler("cpu")
+
+
+def test_save_readback_keeps_previous_optimizer_for_recovery(tmp_path):
+    from vlm_lab.runner import save_checkpoint, verify_checkpoint_readable
+    items = components()
+    cfg = {"train_projector": False, "max_steps": 2}
+    stats = {"trainable_params": 5, "projector_params": 0}
+    first = save_checkpoint(*items, cfg, stats, tmp_path, 1, .1, 1., "fixture")
+    second = save_checkpoint(*items, cfg, stats, tmp_path, 2, .2, 1., "fixture")
+    verify_checkpoint_readable(first)
+    verify_checkpoint_readable(second)
+    assert (first/"training_state.pt").exists()
+    assert json.loads((tmp_path/"latest.json").read_text())["checkpoint"] == second.name
+
+
+def test_failed_drive_copy_preserves_latest_and_audit_can_select_backup(tmp_path, monkeypatch, capsys):
+    import argparse
+    import shutil
+    from vlm_lab.runner import audit_checkpoints, save_checkpoint
+    items = components()
+    cfg = {"train_projector": False, "max_steps": 3}
+    stats = {"trainable_params": 5, "projector_params": 0}
+    first = save_checkpoint(*items, cfg, stats, tmp_path, 1, .1, 1., "fixture")
+    copy = shutil.copytree
+
+    def partial_copy(source, destination, *args, **kwargs):
+        from pathlib import Path
+        result = copy(source, destination, *args, **kwargs)
+        destination = Path(destination)
+        if destination.name == "step-0002.incomplete":
+            (destination/"adapter/adapter_model.safetensors").unlink()
+            raise OSError("simulated Drive failure")
+        return result
+
+    monkeypatch.setattr(shutil, "copytree", partial_copy)
+    with pytest.raises(OSError, match="Drive failure"):
+        save_checkpoint(*items, cfg, stats, tmp_path, 2, .2, 1., "fixture")
+    assert json.loads((tmp_path/"latest.json").read_text())["checkpoint"] == first.name
+    audit_checkpoints(argparse.Namespace(run_dir=str(tmp_path), select=None))
+    output = capsys.readouterr().out
+    assert "RESUME_OK step=1" in output and "NOT_RESUMABLE" in output
+    audit_checkpoints(argparse.Namespace(run_dir=str(tmp_path), select=first.name))
+    assert list(tmp_path.glob("latest.json.before-recovery-*"))

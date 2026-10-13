@@ -4,8 +4,10 @@ import hashlib
 import json
 import math
 import random
+import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -78,37 +80,38 @@ def batches_for_steps(rows, batch_size, seed, start_micro=0):
 def save_checkpoint(model, processor, optimizer, scaler, cfg, stats, root, step, minutes, peak, version):
     import torch
     root = Path(root)
-    previous_checkpoint = (root/read_json(root/"latest.json")["checkpoint"]
-                           if (root/"latest.json").exists() else None)
     target = root/f"step-{step:04d}"
     staging = root/f"step-{step:04d}.incomplete"
-    staging.mkdir(parents=True, exist_ok=True)
-    model.save_pretrained(str(staging/"adapter"))
-    processor.save_pretrained(str(staging/"processor"))
-    if cfg["train_projector"]:
-        projector = {n: p.detach().cpu().clone() for n, p in model.named_parameters() if is_projector(n)}
-        torch.save(projector, staging/"projector.pt")
-        del projector
-    torch.save({"optimizer": optimizer.state_dict(), "scaler": scaler.state_dict(),
-                "torch_rng": torch.get_rng_state(), "cuda_rng": torch.cuda.get_rng_state_all()},
-               staging/"training_state.pt")
+    if target.exists() or staging.exists():
+        raise FileExistsError(f"Checkpoint directory already exists; preserve and audit it: {target} / {staging}")
     run = {"config": cfg, "dataset_version": version, "step": step,
            "complete": step == cfg["max_steps"], "trainable_params": stats["trainable_params"],
            "projector_params": stats["projector_params"], "peak_vram_gb": peak,
            "train_minutes": minutes}
-    dump_json(staging/"run.json", run)
-    validate_checkpoint_files(staging, require_training_state=True)
-    if target.exists():
-        raise FileExistsError(f"Checkpoint already exists: {target}")
+    # Serialize on the VM's local disk first, then copy to Drive. Keep .incomplete
+    # and the previous latest pointer if transfer or read-back fails.
+    with tempfile.TemporaryDirectory(prefix="vlm-checkpoint-") as local:
+        local = Path(local)
+        model.save_pretrained(str(local/"adapter"))
+        processor.save_pretrained(str(local/"processor"))
+        if cfg["train_projector"]:
+            projector = {n: p.detach().cpu().clone() for n, p in model.named_parameters() if is_projector(n)}
+            torch.save(projector, local/"projector.pt")
+            del projector
+        torch.save({"optimizer": optimizer.state_dict(), "scaler": scaler.state_dict(),
+                    "torch_rng": torch.get_rng_state(), "cuda_rng": torch.cuda.get_rng_state_all()},
+                   local/"training_state.pt")
+        dump_json(local/"run.json", run)
+        validate_checkpoint_files(local, require_training_state=True)
+        print(f"Copying checkpoint step {step} to {staging}", flush=True)
+        shutil.copytree(local, staging)
+    verify_checkpoint_readable(staging)
     staging.rename(target)
+    verify_checkpoint_readable(target)
     dump_json(root/"latest.json", {"checkpoint": target.name})
     dump_json(root/"run.json", run)
-    # Retain historical adapters/projectors, but optimizer/RNG only for latest resume.
-    # Remove a single known file only after the new checkpoint and pointer are committed.
-    if previous_checkpoint is not None:
-        previous_state = previous_checkpoint/"training_state.pt"
-        if previous_state.exists():
-            previous_state.unlink()
+    # Retain historical optimizer states as recovery backups. Drive storage must
+    # be managed explicitly; do not erase the only recoverable state automatically.
     print(f"Saved {target}", flush=True)
     return target
 
@@ -153,6 +156,61 @@ def load_local_adapter_weights(checkpoint):
         return load_file(str(weights), device="cpu")
     import torch
     return torch.load(weights, map_location="cpu", weights_only=True)
+
+
+def verify_checkpoint_readable(checkpoint):
+    """Read back serialized tensors, not just directory entries or metadata."""
+    import torch
+    validate_checkpoint_files(checkpoint, require_training_state=True)
+    adapter = load_local_adapter_weights(checkpoint)
+    if not adapter or not all(isinstance(v, torch.Tensor) for v in adapter.values()):
+        raise ValueError("Adapter has no valid tensor state")
+    del adapter
+    state = torch.load(Path(checkpoint)/"training_state.pt", map_location="cpu", weights_only=True)
+    if not {"optimizer", "scaler", "torch_rng", "cuda_rng"} <= set(state):
+        raise ValueError("Training state is missing optimizer/scaler/RNG fields")
+    del state
+    if read_json(Path(checkpoint)/"run.json")["config"].get("train_projector"):
+        projector = torch.load(Path(checkpoint)/"projector.pt", map_location="cpu", weights_only=True)
+        if not projector or not all(isinstance(v, torch.Tensor) for v in projector.values()):
+            raise ValueError("Projector has no valid tensor state")
+
+
+def audit_checkpoints(args):
+    """Read-only inventory by default; --select explicitly repairs the latest pointer."""
+    root = Path(args.run_dir)
+    print(f"Checkpoint inventory: {root}", flush=True)
+    usable = {}
+    for path in sorted(root.glob("step-*")):
+        if not path.is_dir():
+            continue
+        print(f"\n{path.name}", flush=True)
+        for file in sorted(path.rglob("*")):
+            if file.is_file():
+                print(f"  {file.relative_to(path)}: {file.stat().st_size:,} bytes", flush=True)
+        try:
+            verify_checkpoint_readable(path)
+            run = read_json(path/"run.json")
+            usable[path.name] = run
+            print(f"  RESUME_OK step={run['step']}", flush=True)
+        except Exception as error:
+            print(f"  NOT_RESUMABLE: {type(error).__name__}: {error}", flush=True)
+    if not usable:
+        print("No readable full checkpoint found. Check Drive Trash/backups before starting a new run.", flush=True)
+    if args.select:
+        if args.select not in usable:
+            raise ValueError("--select must name a listed RESUME_OK checkpoint")
+        selected = root/args.select
+        run = usable[args.select]
+        if (root/"config.json").exists():
+            assert read_json(root/"config.json") == run["config"], "Checkpoint config does not match run"
+        # Preserve old metadata; do not remove or modify any weight files.
+        for name in ("latest.json", "run.json"):
+            if (root/name).exists():
+                shutil.copy2(root/name, root/f"{name}.before-recovery-{time.time_ns()}")
+        dump_json(root/"latest.json", {"checkpoint": selected.name})
+        dump_json(root/"run.json", run)
+        print(f"Selected {selected}; retry training with --resume and the same configuration.")
 
 
 def train(args):
@@ -380,9 +438,12 @@ def score(args):
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     sub = p.add_subparsers(dest="command", required=True)
-    for name in ("train", "infer", "inspect", "score", "summarize", "visualize", "e4-config"):
+    for name in ("train", "infer", "inspect", "score", "summarize", "visualize", "e4-config", "checkpoints"):
         a = sub.add_parser(name)
         a.add_argument("--data-dir", default="data")
+        if name == "checkpoints":
+            a.add_argument("--run-dir", required=True)
+            a.add_argument("--select", help="Explicitly point latest.json to a listed RESUME_OK directory")
         if name in ("train", "e4-config"):
             a.add_argument("--config", required=True)
             a.add_argument("--coord", choices=["norm1000", "pixel"])
@@ -415,7 +476,9 @@ def main():
             a.add_argument("--evidence-dir", default="report/evidence")
             a.add_argument("--out", default="report/results.md")
     args = p.parse_args()
-    if args.command == "train":
+    if args.command == "checkpoints":
+        audit_checkpoints(args)
+    elif args.command == "train":
         if args.save_every < 1:
             p.error("--save-every must be positive")
         train(args)
