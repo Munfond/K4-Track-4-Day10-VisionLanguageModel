@@ -4,6 +4,10 @@ Mã bắt buộc E0–E4 nằm trong `vlm_lab/`. Notebook `lab_day10.ipynb` gọ
 giải phóng GPU sau mỗi lệnh. Công cụ gốc trong `scripts/` và `tests/` được giữ nguyên.
 Bạn vẫn phải chạy trên GPU, kiểm tra kết quả và tự hoàn thành REPORT.md bằng số liệu thật.
 
+`run_cmd` đọc stdout/stderr của tiến trình con và in trực tiếp trong cell Colab. Bạn sẽ thấy
+`Running: ...`, log thực thi và traceback nếu lệnh lỗi. Nếu đang dùng bản notebook cũ chỉ thấy
+cell kết thúc mà không có log, mở lại notebook mới từ GitHub hoặc thay hàm `run_cmd` bằng bản mới.
+
 ## 1. Đưa bản code mới lên Colab
 
 Chọn một trong hai cách:

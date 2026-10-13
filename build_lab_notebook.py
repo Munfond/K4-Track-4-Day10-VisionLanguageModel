@@ -33,13 +33,29 @@ drive.mount('/content/drive')
 import os, sys, subprocess, shutil, json
 from pathlib import Path
 
+def run_cmd(*args, check=True):
+    command = [str(a) for a in args]
+    child_env = os.environ.copy()
+    child_env["PYTHONUNBUFFERED"] = "1"
+    child_env["PYTHONIOENCODING"] = "utf-8"
+    print("Running:", " ".join(command), flush=True)
+    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                          text=True, encoding="utf-8", errors="replace", bufsize=1,
+                          env=child_env) as process:
+        for line in process.stdout:
+            print(line, end="", flush=True)
+        returncode = process.wait()
+    if check and returncode:
+        raise subprocess.CalledProcessError(returncode, command)
+    return subprocess.CompletedProcess(command, returncode)
+
 REPO_URL = "https://github.com/Munfond/K4-Track-4-Day10-VisionLanguageModel.git"
 REPO_DIR = Path("/content/road-vlm")
 ARTIFACT_DIR = Path("/content/drive/MyDrive/road-vlm-day10")
 ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
 if not REPO_DIR.exists():
     assert REPO_URL, "Giải nén ZIP vào /content/road-vlm trước."
-    subprocess.run(["git", "clone", REPO_URL, str(REPO_DIR)], check=True)
+    run_cmd("git", "clone", REPO_URL, str(REPO_DIR))
 os.chdir(REPO_DIR)
 assert (REPO_DIR / "vlm_lab/runner.py").exists(), "Repo Colab chưa có mã mới: push mã hoặc upload ZIP."
 # Khôi phục bằng chứng đã lưu nếu đây là session mới.
@@ -55,10 +71,6 @@ else:
 CHECKPOINT_ROOT = ARTIFACT_DIR / "checkpoints"
 CHECKPOINT_ROOT.mkdir(exist_ok=True)
 
-def run_cmd(*args):
-    # Output hiển thị trực tiếp; cell dừng ngay nếu lệnh thất bại.
-    subprocess.run([str(a) for a in args], check=True)
-
 def lab(*args):
     run_cmd(sys.executable, "-m", "vlm_lab.runner", *args)
 
@@ -68,7 +80,7 @@ def backup_reports():
 run_cmd("nvidia-smi", "-L")
 run_cmd(sys.executable, "-m", "pip", "install", "-r", "requirements-colab.txt", "pytest")
 # Colab có thể có xung đột từ các package không dùng trong lab; vẫn in để kiểm tra.
-subprocess.run([sys.executable, "-m", "pip", "check"], check=False)
+run_cmd(sys.executable, "-m", "pip", "check", check=False)
 run_cmd(sys.executable, "-c", "import torch, torchvision, transformers, peft, bitsandbytes; "
         "assert torch.cuda.is_available(); print('GPU and lab imports: OK')")
 ''')
@@ -275,7 +287,7 @@ backup_reports()
 bundle = shutil.make_archive(str(ARTIFACT_DIR / "lab_results"), "zip", root_dir=REPO_DIR, base_dir="report")
 print("Results ZIP:", bundle)
 # FAIL lúc này có thể là REPORT còn trống hoặc repo chưa đủ commit. Xem từng mục, sửa thật rồi kiểm tra lại.
-result = subprocess.run([sys.executable, "scripts/check_submission.py"], check=False)
+result = run_cmd(sys.executable, "scripts/check_submission.py", check=False)
 print("Submission checker exit code:", result.returncode)
 ''')
 md("""
