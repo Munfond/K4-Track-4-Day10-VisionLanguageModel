@@ -5,6 +5,9 @@ from .data import make_prompt, objects_to_answer, open_image
 
 LLM_PATTERN = r"model\.language_model\.layers\.\d+\.(self_attn\.(q|k|v|o)_proj|mlp\.(gate|up|down)_proj)"
 VIT_PATTERN = r"model\.visual\.blocks\.\d+\.(attn\.(qkv|proj)|mlp\.(linear_fc1|linear_fc2))"
+# Transformers 5.19 matches exclusions against full paths from the root.
+# "visual" does not match the descendants of "model.visual".
+QUANTIZATION_SKIP_MODULES = ("model.visual", "lm_head")
 
 
 def is_projector(name):
@@ -18,7 +21,7 @@ def load_base(model_id):
         raise RuntimeError("Select a Colab GPU runtime (T4). This command requires CUDA.")
     quant = BitsAndBytesConfig(
         load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_compute_dtype=torch.float16,
-        bnb_4bit_use_double_quant=True, llm_int8_skip_modules=["visual", "lm_head"])
+        bnb_4bit_use_double_quant=True, llm_int8_skip_modules=list(QUANTIZATION_SKIP_MODULES))
     model = Qwen3VLForConditionalGeneration.from_pretrained(
         model_id, quantization_config=quant, dtype=torch.float16,
         device_map={"": 0}, attn_implementation="sdpa")
@@ -26,7 +29,11 @@ def load_base(model_id):
     processor.tokenizer.padding_side = "left"
     for name, param in model.named_parameters():
         if "visual" in name or "lm_head" in name:
-            assert param.is_floating_point(), f"Unexpected quantized parameter: {name}"
+            assert param.is_floating_point() and param.__class__.__name__ not in ("Params4bit", "Int8Params"), f"Unexpected quantized parameter: {name}"
+    quantized_llm = [n for n, m in model.named_modules()
+                     if n.startswith("model.language_model.") and m.__class__.__name__ == "Linear4bit"]
+    assert len(quantized_llm) == 252, f"Expected 252 quantized LLM Linear modules; found {len(quantized_llm)}"
+    print(f"Quantization check: {len(quantized_llm)} LLM Linear4bit modules; ViT/projectors/lm_head floating point", flush=True)
     return model, processor
 
 

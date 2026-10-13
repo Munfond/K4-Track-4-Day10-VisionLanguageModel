@@ -129,6 +129,7 @@ Notebook không tự pull code khi repo đã tồn tại; cập nhật repo Cola
 | Loss hoặc gradient NaN/Inf | Dừng và kiểm tra mask/nhãn; giảm lr trong cấu hình riêng và thử val. Mã không âm thầm bỏ qua bước lỗi |
 | Resume config mismatch | Dùng chính xác cấu hình lần đầu; thay đổi cấu hình thì tạo run mới |
 | Expected 220/252/348 nhưng nhận số khác | Dừng, kiểm tra phiên bản và cây module; không xóa assert để chạy tiếp |
+| Unexpected quantized parameter: model.visual... | Cập nhật code bằng git pull. Với transformers 5.19, skip phải là đường dẫn đầy đủ `model.visual`, không phải `visual`; mã kiểm tra ViT/projector/lm_head sau khi load |
 | Parse rate thấp | Đọc output val, kiểm tra nhãn có `<|im_end|>`; thử giới hạn sinh dài hơn trên val với output path mới |
 | Drive đầy | Giữ checkpoint cuối cần dùng; chuyển/lưu trữ checkpoint lịch sử. Không xóa projector của run cần chấm |
 
